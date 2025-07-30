@@ -70,7 +70,8 @@ class AppState: Sendable {
     if let item = history.selectedItem, history.items.contains(item) {
       history.select(item)
     } else if let item = footer.selectedItem {
-      if item.confirmation != nil {
+      // TODO: Use item.suppressConfirmation, but it's not updated!
+      if item.confirmation != nil, Defaults[.suppressClearAlert] == false {
         item.showConfirmation = true
       } else {
         item.action()
@@ -108,7 +109,7 @@ class AppState: Sendable {
     }
   }
 
-  func highlightNext() {
+  func highlightNext(allowCycle: Bool = false) {
     if let selectedItem = history.selectedItem {
       if let nextItem = history.items.filter(\.isVisible).item(after: selectedItem) {
         selectFromKeyboardNavigation(nextItem.id)
@@ -119,6 +120,9 @@ class AppState: Sendable {
     } else if let selectedItem = footer.selectedItem {
       if let nextItem = footer.items.filter(\.isVisible).item(after: selectedItem) {
         selectFromKeyboardNavigation(nextItem.id)
+      } else if allowCycle {
+        // End of footer; cycle to the beginning
+        highlightFirst()
       }
     } else {
       selectFromKeyboardNavigation(footer.items.first(where: \.isVisible)?.id)
